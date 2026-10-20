@@ -1,0 +1,32 @@
+/* ═══════════════════════════════════════════════════════════════
+   Mohamed Khaled — Portfolio
+   🔤 Self-Hosted Fonts
+   ⚡ WOFF2 (Inter) + TTF Variable (Space Grotesk, JetBrains Mono)
+═══════════════════════════════════════════════════════════════ */
+
+/* ---------- Space Grotesk (Variable TTF) ---------- */
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('space-grotesk.ttf') format('truetype');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Inter (WOFF2 Static) ---------- */
+@font-face {
+  font-family: 'Inter';
+  src: url('inter.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- JetBrains Mono (Variable TTF) ---------- */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('jetbrains-mono.ttf') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
