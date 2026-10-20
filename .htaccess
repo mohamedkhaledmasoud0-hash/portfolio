@@ -1,0 +1,349 @@
+# ═══════════════════════════════════════════════════════════════
+# 🛡️ Mohamed Khaled Portfolio — Main Security Config
+# ═══════════════════════════════════════════════════════════════
+# 📍 Location: public_html/try0/.htaccess
+# 🎯 Purpose: Security Headers + Caching + Bot Blocking
+# ═══════════════════════════════════════════════════════════════
+
+
+# ───────────────────────────────────────────────────────────────
+# 1️⃣ SECURITY HEADERS
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+
+    # ─────────────────────────────────────────────────────────
+    # Content Security Policy (Strict — No unsafe-inline, No external)
+    # ─────────────────────────────────────────────────────────
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests"
+
+    # ─────────────────────────────────────────────────────────
+    # Anti-Clickjacking
+    # ─────────────────────────────────────────────────────────
+    Header set X-Frame-Options "DENY"
+
+    # ─────────────────────────────────────────────────────────
+    # MIME Sniffing Protection
+    # ─────────────────────────────────────────────────────────
+    Header set X-Content-Type-Options "nosniff"
+
+    # ─────────────────────────────────────────────────────────
+    # Referrer Policy
+    # ─────────────────────────────────────────────────────────
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # ─────────────────────────────────────────────────────────
+    # Permissions Policy (Block all unused features)
+    # ─────────────────────────────────────────────────────────
+    Header set Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), clipboard-read=(), clipboard-write=(), display-capture=(), document-domain=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), speaker-selection=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()"
+
+    # ─────────────────────────────────────────────────────────
+    # Cross-Origin Policies
+    # ─────────────────────────────────────────────────────────
+    Header set Cross-Origin-Opener-Policy "same-origin"
+    Header set Cross-Origin-Resource-Policy "same-origin"
+    Header set Cross-Origin-Embedder-Policy "credentialless"
+
+    # ─────────────────────────────────────────────────────────
+    # Legacy XSS Protection (for old browsers)
+    # ─────────────────────────────────────────────────────────
+    Header set X-XSS-Protection "1; mode=block"
+
+    # ─────────────────────────────────────────────────────────
+    # HSTS — Force HTTPS (only when HTTPS is active)
+    # ─────────────────────────────────────────────────────────
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" env=HTTPS
+
+    # ─────────────────────────────────────────────────────────
+    # Remove Server Signature Headers
+    # ─────────────────────────────────────────────────────────
+    Header unset Server
+    Header unset X-Powered-By
+    Header unset X-AspNet-Version
+    Header unset X-AspNetMvc-Version
+
+    # ─────────────────────────────────────────────────────────
+    # X-Robots-Tag for sensitive paths
+    # ─────────────────────────────────────────────────────────
+    # HTML pages → index
+    <FilesMatch "\.(html|htm)$">
+         Header set X-Robots-Tag "index, follow"
+    </FilesMatch>
+
+    # PHP (API endpoints) → noindex
+     <FilesMatch "\.php$">
+        Header set X-Robots-Tag "noindex, nofollow, noarchive"
+     </FilesMatch>
+
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# 2️⃣ HIDE SERVER VERSION
+# ───────────────────────────────────────────────────────────────
+ServerSignature Off
+
+
+# ───────────────────────────────────────────────────────────────
+# 3️⃣ BLOCK SENSITIVE FILES
+# ───────────────────────────────────────────────────────────────
+
+# Block hidden files (starting with dot)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Block sensitive extensions
+<FilesMatch "(?i)\.(bak|config|conf|sql|fla|psd|ini|log|sh|inc|swp|dist|md|yml|yaml|json|lock|old|orig|save|tmp|temp|git|env|ds_store|sqlite|db)$">
+    Require all denied
+</FilesMatch>
+
+# Block backup/source files
+<FilesMatch "(?i)(^#.*#|~$|\.(bak|orig|save|swp|tmp)$)">
+    Require all denied
+</FilesMatch>
+
+
+# ───────────────────────────────────────────────────────────────
+# 4️⃣ DISABLE DIRECTORY LISTING
+# ───────────────────────────────────────────────────────────────
+Options -Indexes
+Options -MultiViews
+
+
+# ───────────────────────────────────────────────────────────────
+# 5️⃣ BLOCK BAD BOTS & SCRAPERS
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block empty User-Agent
+    RewriteCond %{HTTP_USER_AGENT} ^$
+    RewriteRule .* - [F,L]
+
+    # Block scraper bots
+    RewriteCond %{HTTP_USER_AGENT} (ahrefs|semrush|mj12bot|dotbot|blexbot|majestic|megaindex|sogou|baidu|yandex|spbot|seokicks|seznam|petalbot|bytespider|serpstat) [NC]
+    RewriteRule .* - [F,L]
+
+    # Block AI crawlers
+    RewriteCond %{HTTP_USER_AGENT} (gptbot|chatgpt-user|ccbot|anthropic-ai|claude-web|google-extended|facebookexternalhit) [NC]
+    RewriteRule .* - [F,L]
+
+    # Block hacking tools
+    RewriteCond %{HTTP_USER_AGENT} (nikto|sqlmap|nmap|masscan|nessus|acunetix|netsparker|qualys|hydra|w3af|dirbuster|gobuster|wfuzz|ffuf|zgrab|nuclei|sqlsus|xattacker) [NC]
+    RewriteRule .* - [F,L]
+
+    # Block suspicious HTTP methods (HEAD & OPTIONS سماح)
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|DELETE|PUT|PATCH|CONNECT)$
+    RewriteRule .* - [F,L]
+
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# 6️⃣ BLOCK SUSPICIOUS QUERY STRINGS
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # SQL injection patterns
+    RewriteCond %{QUERY_STRING} (union.*select|select.*from|insert.*into|delete.*from|drop.*table|update.*set) [NC,OR]
+    RewriteCond %{QUERY_STRING} (concat|group_concat|load_file|outfile|benchmark|sleep\(|waitfor\s+delay) [NC,OR]
+    RewriteCond %{QUERY_STRING} (base64_|eval\(|assert\(|system\(|passthru\(|shell_exec\() [NC,OR]
+    RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+    RewriteCond %{QUERY_STRING} (\.\./|\.\.\\|%2e%2e|%252e%252e) [NC,OR]
+    RewriteCond %{QUERY_STRING} (etc/passwd|proc/self|win\.ini|boot\.ini) [NC,OR]
+    RewriteCond %{QUERY_STRING} (phpinfo|phpversion|base64_encode|base64_decode) [NC]
+    RewriteRule .* - [F,L]
+
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# 7️⃣ FORCE HTTPS
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect HTTP → HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Redirect www → non-www
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# 8️⃣ COMPRESSION (GZIP)
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/atom+xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE font/woff
+    AddOutputFilterByType DEFLATE font/woff2
+    AddOutputFilterByType DEFLATE application/font-woff
+    AddOutputFilterByType DEFLATE application/font-woff2
+
+    # Remove browser bugs
+    BrowserMatch ^Mozilla/4 gzip-only-text/html
+    BrowserMatch ^Mozilla/4\.0[678] no-gzip
+    BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+
+    <IfModule mod_headers.c>
+        Header append Vary User-Agent
+    </IfModule>
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# 9️⃣ CACHING (Expires)
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    ExpiresByType text/html "access plus 1 hour"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/json "access plus 1 day"
+    ExpiresByType application/xml "access plus 1 day"
+
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType image/vnd.microsoft.icon "access plus 1 year"
+
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    ExpiresByType application/x-font-ttf "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+
+    ExpiresDefault "access plus 2 days"
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# 🔟 CACHE-CONTROL
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </FilesMatch>
+
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+    </FilesMatch>
+
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|woff|woff2|ttf|otf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    <FilesMatch "\.json$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    </FilesMatch>
+
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# 1️⃣1️⃣ CORS — Restrict to same origin
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    <FilesMatch "\.(php)$">
+        Header set Access-Control-Allow-Origin "https://khaled.nilepage.com"
+        Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+        Header set Access-Control-Allow-Headers "Content-Type, Accept"
+        Header set Access-Control-Max-Age "86400"
+        Header set Vary "Origin"
+    </FilesMatch>
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# 1️⃣2️⃣ PROTECT AGAINST COMMON ATTACKS
+# ───────────────────────────────────────────────────────────────
+
+# Block access to .git, .svn, .hg, .env
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.svn
+RedirectMatch 404 /\.hg
+RedirectMatch 404 /\.env
+RedirectMatch 404 /\.htaccess
+
+# Block rate-limit data folders
+RedirectMatch 404 /\.rl/
+RedirectMatch 404 /\.rl_info/
+
+# Block PHP execution in images/ and fonts/ folders
+<IfModule mod_rewrite.c>
+    RewriteRule ^images/.*\.(php|phtml|php3|php4|php5|php7|phps|pl|py|jsp|asp|sh|cgi)$ - [F,L]
+    RewriteRule ^fonts/.*\.(php|phtml|php3|php4|php5|php7|phps|pl|py|jsp|asp|sh|cgi)$ - [F,L]
+</IfModule>
+
+# Prevent script execution in image folders
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps)$">
+    <If "%{REQUEST_URI} =~ m#^/images/#">
+        Require all denied
+    </If>
+    <If "%{REQUEST_URI} =~ m#^/fonts/#">
+        Require all denied
+    </If>
+</FilesMatch>
+
+# Block direct access to sensitive extensions in root
+<FilesMatch "\.(log|sh|bak|swp|orig|save|tmp)$">
+    Require all denied
+</FilesMatch>
+
+
+# ───────────────────────────────────────────────────────────────
+# 1️⃣3️⃣ LIMIT REQUEST SIZE
+# ───────────────────────────────────────────────────────────────
+LimitRequestBody 2097152
+
+
+# ───────────────────────────────────────────────────────────────
+# 1️⃣4️⃣ SET DEFAULT CHARSET
+# ───────────────────────────────────────────────────────────────
+AddDefaultCharset UTF-8
+AddCharset UTF-8 .html .css .js .json .xml .svg .txt .md
+
+
+# ───────────────────────────────────────────────────────────────
+# 1️⃣5️⃣ MIME TYPES
+# ───────────────────────────────────────────────────────────────
+<IfModule mod_mime.c>
+    AddType font/ttf   .ttf
+    AddType font/woff2 .woff2
+    AddType font/woff  .woff
+    AddType image/webp .webp
+    AddType image/svg+xml .svg
+    AddType application/javascript .js
+    AddType application/json .json
+</IfModule>
+
+
+# ───────────────────────────────────────────────────────────────
+# END OF FILE
+# ───────────────────────────────────────────────────────────────
